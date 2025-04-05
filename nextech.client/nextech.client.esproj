@@ -7,4 +7,8 @@
     <!-- Folder where production build objects will be placed -->
     <BuildOutputFolder>$(MSBuildProjectDirectory)\dist\nextech.client\</BuildOutputFolder>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="src\components\**" />
+    <TypeScriptConfiguration Remove="src\components\**" />
+  </ItemGroup>
 </Project>

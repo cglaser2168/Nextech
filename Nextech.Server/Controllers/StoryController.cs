@@ -27,9 +27,9 @@ namespace Nextech.Server.Controllers
         /// <summary>
         /// Gets the new stories.
         /// </summary>
-        /// <returns>The initial page of stories.</returns>
-        [HttpGet("NewStories")]
-        public async Task<List<StoryDisplayDto>> GetNewStories()
+        /// <returns>The number of new stories.</returns>
+        [HttpGet("StoryCount")]
+        public async Task<int> GetNewStories()
         {
             bool isCached = _cache.TryGetValue(ID_CACHE_KEY, out List<int>? cachedIds);
 
@@ -44,9 +44,11 @@ namespace Nextech.Server.Controllers
                     throw new Exception("Could not get stories.");
 
                 _cache.Set(ID_CACHE_KEY, storyIds);
+
+                return storyIds.Count;
             }
 
-            return await GetPagedStories(1, 20);
+            return 0;
         }
 
         /// <summary>
@@ -64,10 +66,19 @@ namespace Nextech.Server.Controllers
             if (isPageCached)
                 return pageStories!;
 
-            var storyIds = _cache.Get<List<int>>(ID_CACHE_KEY)!;
-            var stories = await GetStoriesByIds(storyIds.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList());
+            bool hasData = _cache.TryGetValue(ID_CACHE_KEY, out List<int>? storyIds);
 
-            _cache.Set(pageKey, stories);
+            List<StoryDisplayDto> stories = new();
+            if (hasData)
+            {
+                stories = await GetStoriesByIds(storyIds!.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList());
+                _cache.Set(pageKey, stories);
+            }
+            else
+            {
+                await GetNewStories();
+                await GetPagedStories(pageNumber, pageSize);
+            }
 
             return stories;
         }

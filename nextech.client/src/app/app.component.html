@@ -1,4 +1,29 @@
-<a *ngFor="let item of stories" [href]="item.url">
-  {{item.title}}
-</a>
-<br />
+<p class="bg-danger" *ngIf="!stories().length">...</p>
+
+<div *ngFor="let item of stories()">
+  @if (item.url !== '') {
+  <a [href]="item.url" target="_blank">{{item.title}}</a>
+  }
+  @else {
+  <span>{{item.title}}</span>
+  }
+  <br />
+</div>
+
+<div class="form-group">
+  <button type="button" class="btn btn-default mr" (click)="firstPage()"><<</button>
+  <button class="btn btn-default mr" (click)="previousPage()"><</button>
+
+  <span>Page {{pageNumber()}} of {{numberOfPages()}}</span>
+
+  <button class="btn btn-default mr" (click)="nextPage()">></button>
+  <button class="btn btn-default mr" (click)="lastPage()">>></button>
+
+  Items Per Page
+  <select class="form-control page-size" [value]="pageSize()" (change)="onSizeChange($event)">
+    <option [value]="5">5</option>
+    <option [value]="10">10</option>
+    <option [value]="20">20</option>
+    <option [value]="50">50</option>
+  </select>
+</div>
