@@ -64,10 +64,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "nextech.client:build:production"
+              "buildTarget": "nextech.client:build:production"
             },
             "development": {
-              "browserTarget": "nextech.client:build:development"
+              "buildTarget": "nextech.client:build:development"
             }
           },
           "defaultConfiguration": "development",
@@ -79,7 +79,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "nextech.client:build"
+            "buildTarget": "nextech.client:build"
           }
         },
         "test": {
