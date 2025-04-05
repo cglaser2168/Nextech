@@ -1,0 +1,7 @@
+{
+    "/Story": {
+      "target": "https://localhost:7034",
+      "secure": false,
+      "changeOrigin": true
+    }
+  }
