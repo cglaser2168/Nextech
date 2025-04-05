@@ -1,6 +1,6 @@
 @Nextech.Server_HostAddress = http://localhost:5055
 
-GET {{Nextech.Server_HostAddress}}/weatherforecast/
+GET {{Nextech.Server_HostAddress}}/story/
 Accept: application/json
 
 ###
