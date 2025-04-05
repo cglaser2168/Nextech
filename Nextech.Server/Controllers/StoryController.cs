@@ -22,33 +22,17 @@ namespace Nextech.Server.Controllers
 
         private readonly string BASE_URL = "https://hacker-news.firebaseio.com/v0/";
         private readonly string BASE_SUFFIX = ".json?print=pretty";
-        private readonly string ID_CACHE_KEY = "NewStoryIds";
+        private readonly string CACHE_KEY = "NewStories";
 
         /// <summary>
-        /// Gets the new stories.
+        /// Gets and caches the new stories.
         /// </summary>
-        /// <returns>The number of new stories.</returns>
-        [HttpGet("StoryCount")]
-        public async Task<int> GetNewStories()
+        /// <returns>The initial page of stories.</returns>
+        [HttpGet("NewStories")]
+        public async Task<StoryPayloadDto> GetNewStories()
         {
-            bool isCached = _cache.TryGetValue(ID_CACHE_KEY, out List<int>? cachedIds);
-
-            if (!isCached)
-            {
-                var response = await _client.GetAsync($"{BASE_URL}newstories{BASE_SUFFIX}");
-                response.EnsureSuccessStatusCode();
-
-                var storyIds = await response.Content.ReadFromJsonAsync<List<int>>();
-
-                if (storyIds == null)
-                    throw new Exception("Could not get stories.");
-
-                _cache.Set(ID_CACHE_KEY, storyIds);
-
-                return storyIds.Count;
-            }
-
-            return 0;
+            var stories = await GetStoriesBasedOnCache();
+            return new StoryPayloadDto() { RecordCount = stories.Count, Stories = stories.Take(20).ToList() };
         }
 
         /// <summary>
@@ -56,37 +40,42 @@ namespace Nextech.Server.Controllers
         /// </summary>
         /// <param name="pageNumber">The number of the page being requested.</param>
         /// <param name="pageSize">The size of the page.</param>
-        /// <returns></returns>
-        [HttpGet("PagedStories/{pageNumber}/{pageSize}")]
-        public async Task<List<StoryDisplayDto>> GetPagedStories(int pageNumber, int pageSize)
+        /// <returns>The correct page if </returns>
+        [HttpPost("PagedStories/{pageNumber}/{pageSize}")]
+        public async Task<StoryPayloadDto> GetPagedStories(int pageNumber, int pageSize, [FromForm] string searchText = "")
         {
-            string pageKey = $"page-{pageNumber}-size-{pageSize}";
-            var isPageCached = _cache.TryGetValue(pageKey, out List<StoryDisplayDto>? pageStories);
+            var stories = await GetStoriesBasedOnCache();
 
-            if (isPageCached)
-                return pageStories!;
+            var filtered = stories.Where(t => string.IsNullOrWhiteSpace(searchText) ||
+                        t.Title.ToLower().Contains(searchText) ||
+                        t.Url.ToLower().Contains(searchText)).ToList();
 
-            bool hasData = _cache.TryGetValue(ID_CACHE_KEY, out List<int>? storyIds);
-
-            List<StoryDisplayDto> stories = new();
-            if (hasData)
+            return new StoryPayloadDto()
             {
-                stories = await GetStoriesByIds(storyIds!.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList());
-                _cache.Set(pageKey, stories);
-            }
-            else
-            {
-                await GetNewStories();
-                await GetPagedStories(pageNumber, pageSize);
-            }
-
-            return stories;
+                RecordCount = filtered.Count,
+                Stories = filtered.Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize).ToList()
+            };
         }
 
-        private async Task<List<StoryDisplayDto>> GetStoriesByIds(List<int> ids)
+        private async Task<List<StoryDisplayDto>> GetStoriesBasedOnCache()
         {
+            bool isCached = _cache.TryGetValue(CACHE_KEY, out List<StoryDisplayDto>? cachedStories);
+            return isCached ? cachedStories! : await FetchStoriesFromApi();
+        }
+
+        private async Task<List<StoryDisplayDto>> FetchStoriesFromApi()
+        {
+            var response = await _client.GetAsync($"{BASE_URL}newstories{BASE_SUFFIX}");
+            response.EnsureSuccessStatusCode();
+
+            var storyIds = await response.Content.ReadFromJsonAsync<List<int>>();
+
+            if (storyIds == null)
+                throw new Exception("Could not get stories.");
+
             List<StoryDisplayDto> stories = new();
-            await Parallel.ForEachAsync(ids, async (id, token) =>
+            await Parallel.ForEachAsync(storyIds, async (id, token) =>
             {
                 var storyResponse = await _client.GetAsync($"{BASE_URL}item/{id + BASE_SUFFIX}");
                 storyResponse.EnsureSuccessStatusCode();
@@ -97,7 +86,7 @@ namespace Nextech.Server.Controllers
                     stories.Add(new() { Title = storyContent.Title, Url = storyContent.Url ?? string.Empty });
             });
 
-            return stories;
+            return _cache.Set(CACHE_KEY, stories);
         }
     }
 }

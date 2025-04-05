@@ -1,7 +1,7 @@
-import { Component, OnInit, computed, effect, signal } from '@angular/core';
-import { AppService } from './app.service';
+import { Component, OnInit, computed, effect, signal, untracked } from '@angular/core';
+import { NgxSpinnerService } from 'ngx-spinner';
 import { StoryDisplay } from './app.models';
-import { forkJoin } from 'rxjs';
+import { AppService } from './app.service';
 
 @Component({
   selector: 'app-root',
@@ -9,54 +9,47 @@ import { forkJoin } from 'rxjs';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  storyCount = 500;
+  readonly storyCount = signal(0);
+  readonly searchText = signal('');
   readonly stories = signal<StoryDisplay[]>([]);
 
   readonly pageNumber = signal(1);
   readonly pageSize = signal(20);
 
   readonly numberOfPages = computed(() => {
-    return Math.floor(this.storyCount / this.pageSize());
+    return Math.ceil(this.storyCount() / this.pageSize());
   })
 
   readonly onPageChange = effect(() => {
     this.pageNumber();
     this.pageSize();
 
-    this.getPage();
+    untracked(() => {
+      this.getPage();
+    })
   })
 
-  constructor(private appService: AppService) { }
+  constructor(
+    private appService: AppService,
+    private spinner: NgxSpinnerService
+  ) { }
 
   ngOnInit() {
-    //todo spinner
+    this.spinner.show('spinner');
+    this.appService.getNewStories().subscribe({
+      next: (results) => {
+        console.log(results)
 
-    forkJoin([
-      this.appService.getStoryCount(),
-      this.appService.getStoriesPaged(this.pageNumber(), this.pageSize())
-    ]).subscribe({
-      next: ([count, pageData]) => {
-        this.storyCount = count;
-        this.stories.set(pageData);
+        this.stories.set(results.stories);
+        this.storyCount.set(results.recordCount);
+      },
+      error: () => {
+        // errror
+      },
+      complete: () => {
+        this.spinner.hide('spinner');
       }
-    })
-
-    //this.appService.getStories().subscribe({
-    //  next: (results) => {
-    //    console.log(results)
-    //    if (!results || results.length === 0) {
-    //      // todo: error
-    //    }
-
-    //    this.stories = results;
-    //  },
-    //  error: () => {
-    //    // errror
-    //  },
-    //  complete: () => {
-    //    //hidespinner
-    //  }
-    //});
+    });
   }
 
   firstPage() {
@@ -80,21 +73,26 @@ export class AppComponent implements OnInit {
     this.pageSize.set(event.target.value);
   }
 
-  private getPage() {
-    this.appService.getStoriesPaged(this.pageNumber(), this.pageSize()).subscribe({
+  onSearchChange(event: any) {
+    this.searchText.set(event.target.value);
+  }
+
+  getPage() {
+    console.log(this.searchText())
+    this.spinner.show('spinner');
+    this.appService.getStoriesPaged(this.pageNumber(), this.pageSize(), this.searchText() !== '' ? this.searchText() : null).subscribe({
       next: (results) => {
         console.log(results)
-        if (!results || results.length === 0) {
-          // todo: error
-        }
 
-        this.stories.set(results);
+        this.stories.set(results.stories);
+        this.storyCount.set(results.recordCount);
       },
       error: () => {
+        this.spinner.hide('spinner');
         // errror
       },
       complete: () => {
-        //hidespinner
+        this.spinner.hide('spinner');
       }
     })
   }

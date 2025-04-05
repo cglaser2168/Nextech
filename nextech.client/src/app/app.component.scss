@@ -4,5 +4,46 @@
 
 .page-size {
   display: inline;
-  width: 20%;
+  width: 5%;
+}
+
+#no-results {
+    margin: 2rem;
+}
+
+#main {
+  text-align: center;
+  padding-top: 1rem;
+}
+
+#list {
+    text-align: start;
+}
+
+.m-top {
+    margin-top: 1rem;
+}
+
+.m-btm {
+    margin-bottom: 1rem;
+}
+
+.fw-bold {
+    font-weight: 800;
+}
+
+.btn {
+    border: unset !important;
+}
+
+.btn:disabled {
+    opacity: 0.3;
+}
+
+.btn:hover {
+  background: rgb(0, 0, 0, 0.1);
+}
+
+#page-count {
+    margin: 0 5px 0 5px;
 }

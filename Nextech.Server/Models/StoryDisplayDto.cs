@@ -6,3 +6,9 @@ public record StoryDisplayDto
     public string Url { get; set; } = string.Empty;
 
 }
+
+public record StoryPayloadDto
+{
+    public int RecordCount { get; set; }
+    public List<StoryDisplayDto> Stories { get; set; } = new();
+}
