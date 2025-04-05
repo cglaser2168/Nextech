@@ -5,7 +5,7 @@ using Nextech.Server.Models;
 namespace Nextech.Server.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class StoryController : ControllerBase
     {
         private readonly IMemoryCache _cache;
@@ -56,7 +56,7 @@ namespace Nextech.Server.Controllers
         /// <param name="pageSize">The size of the page.</param>
         /// <returns></returns>
         [HttpGet("PagedStories/{pageNumber}/{pageSize}")]
-        public async Task<List<StoryDisplayDto>> GetPagedStories(int pageNumber, int pageSize)
+        public async Task<List<StoryDisplayDto>> GetPagedStories([FromQuery] int pageNumber, [FromQuery] int pageSize)
         {
             string pageKey = $"page-{pageNumber}-size-{pageSize}";
             var isPageCached = _cache.TryGetValue(pageKey, out List<StoryDisplayDto>? pageStories);

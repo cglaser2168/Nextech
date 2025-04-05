@@ -1,37 +1,61 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-
-interface WeatherForecast {
-  date: string;
-  temperatureC: number;
-  temperatureF: number;
-  summary: string;
-}
+import { Component, effect, signal } from '@angular/core';
+import { AppService } from './app.service';
+import { StoryDisplay } from './app.models';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-  public forecasts: WeatherForecast[] = [];
+export class AppComponent {
+  stories: StoryDisplay[] = [];
 
-  constructor(private http: HttpClient) {}
+  readonly pageNumber = signal(1);
+  readonly pageSize = signal(20);
 
-  ngOnInit() {
-    this.getForecasts();
-  }
+  readonly onPageChange = effect(() => {
+    this.pageNumber();
+    this.pageSize();
 
-  getForecasts() {
-    this.http.get<WeatherForecast[]>('/weatherforecast').subscribe(
-      (result) => {
-        this.forecasts = result;
+    this.getPage();
+  })
+
+  constructor(private appService: AppService) {
+    //todo spinner
+    this.appService.getStories().subscribe({
+      next: (results) => {
+        console.log(results)
+        if (!results || results.length === 0) {
+          // todo: error
+        }
+
+        this.stories = results;
       },
-      (error) => {
-        console.error(error);
+      error: () => {
+        // errror
+      },
+      complete: () => {
+        //hidespinner
       }
-    );
+    });
   }
 
-  title = 'nextech.client';
+  private getPage() {
+    this.appService.getStoriesPaged(this.pageNumber(), this.pageSize()).subscribe({
+      next: (results) => {
+        console.log(results)
+        if (!results || results.length === 0) {
+          // todo: error
+        }
+
+        this.stories = results;
+      },
+      error: () => {
+        // errror
+      },
+      complete: () => {
+        //hidespinner
+      }
+    })
+  }
 }
