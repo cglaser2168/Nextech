@@ -1,54 +1,135 @@
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgxSpinnerService } from 'ngx-spinner';
+import { of } from 'rxjs';
 import { AppComponent } from './app.component';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { StoryDisplay } from './app.models';
+import { StoryDisplay, StoryPayload } from './app.models';
 import { AppService } from './app.service';
 
-describe('AppComponent', () => {
-  let component: AppComponent;
-  let fixture: ComponentFixture<AppComponent>;
-  let serviceMock: any;
+interface TestClasses {
+  component: AppComponent;
+  fixture: ComponentFixture<AppComponent>;
+  serviceMock: any;
+  spinnerMock: any;
+  sampleData: StoryPayload;
+}
 
-  beforeEach(async () => {
-    serviceMock: {
-      getNewStories: jasmine.createSpy('getNewStories').call
+describe('AppComponent', () => {
+  beforeEach(async function (this: TestClasses): Promise<void> {
+    this.serviceMock = {
+      getNewStories: jasmine.createSpy('getNewStories').and.callFake(() => { return of(this.sampleData) }),
+      getStoriesPaged: jasmine.createSpy('getStoriesPaged').and.callFake(() => { return of(this.sampleData) })
     }
 
-    await TestBed.configureTestingModule({
-    declarations: [AppComponent],
-    imports: [],
-    providers: [
-      provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting(),
-      { provide: AppService, useValue: serviceMock }
-    ]
-}).compileComponents();
+    this.spinnerMock = {
+      show: jasmine.createSpy('show'),
+      hide: jasmine.createSpy('hide')
+    };
+
+    this.sampleData = {
+      recordCount: 2,
+      stories: [
+        { title: 'A sample Title', url: 'hiip://beepboop.gov' },
+        { title: 'Not google', url: 'hiip://notgoogle.com' },
+      ]
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AppService, useValue: this.serviceMock },
+        { provide: NgxSpinnerService, useValue: this.spinnerMock }
+      ]
+    }).compileComponents();
+
+    this.fixture = TestBed.createComponent(AppComponent);
+    this.component = this.fixture.componentInstance;
   });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(AppComponent);
-    component = fixture.componentInstance;
-    serviceMock = TestBed.inject(HttpTestingController);
+  it('should create the app', function (this: TestClasses) {
+    expect(this.component).toBeTruthy();
   });
 
-  it('should create the app', () => {
-    expect(component).toBeTruthy();
+  it('should get the initial new stories', function (this: TestClasses) {
+    this.component.ngOnInit();
+    this.fixture.detectChanges();
+
+    expect(this.serviceMock.getNewStories).toHaveBeenCalled();
+    expect(this.component.storyCount()).toEqual(2);
+    expect(this.component.stories()).toEqual(this.sampleData.stories);
   });
 
-  it('should retrieve weather forecasts from the server', () => {
-    const mockStories: StoryDisplay[] = [
-      { title: 'A sample Title', url: 'hiip://beepboop.gov' },
-      { title: 'Not google', url: 'hiip://notgoogle.com' },
-    ];
+  it('should go to first page', function (this: TestClasses) {
+    this.component.firstPage();
 
-    component.ngOnInit();
+    expect(this.component.pageNumber()).toEqual(1);
+  });
 
-    expect()
-    const req = httpMock.expectOne('/weatherforecast');
-    expect(req.request.method).toEqual('GET');
-    req.flush(mockForecasts);
+  it('should go to last page', function (this: TestClasses) {
+    this.component.storyCount.set(100);
+    this.component.pageSize.set(10);
 
-    expect(component.forecasts).toEqual(mockForecasts);
+    this.component.lastPage();
+
+    expect(this.component.pageNumber()).toEqual(10);
+  });
+
+  it('should go to the previous page', function (this: TestClasses) {
+    this.component.pageNumber.set(5);
+    this.component.previousPage();
+
+    expect(this.component.pageNumber()).toEqual(4);
+  });
+
+  it('should go to the next page', function (this: TestClasses) {
+    this.component.pageNumber.set(5);
+    this.component.nextPage();
+
+    expect(this.component.pageNumber()).toEqual(6);
+  });
+
+  it('should change the size', function (this: TestClasses) {
+    const event = {
+      target: {
+        value: 15
+      }
+    };
+
+    this.component.onSizeChange(event);
+
+    expect(this.component.pageSize()).toEqual(15);
+  });
+
+  it('should change the search text', function (this: TestClasses) {
+    const event = {
+      target: {
+        value: 'test'
+      }
+    };
+
+    this.component.onSearchChange(event);
+
+    expect(this.component.searchText()).toEqual('test');
+  });
+
+  it('should search stories based on criteria without text', function (this: TestClasses) {
+    this.component.pageNumber.set(2);
+    this.component.pageSize.set(30);
+
+    this.component.getPage();
+    this.fixture.detectChanges();
+
+    expect(this.component.appService.getStoriesPaged).toHaveBeenCalledWith(2, 30, null);
+    expect(this.component.stories()).toEqual(this.sampleData.stories);
+  });
+
+  it('should search stories based on criteria including text', function (this: TestClasses) {
+    this.component.pageNumber.set(2);
+    this.component.pageSize.set(30);
+    this.component.searchText.set('test');
+
+    this.component.getPage();
+    this.fixture.detectChanges();
+
+    expect(this.component.appService.getStoriesPaged).toHaveBeenCalledWith(2, 30, 'test');
+    expect(this.component.stories()).toEqual(this.sampleData.stories);
   });
 });

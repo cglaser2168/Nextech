@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
-import { Injectable } from "@angular/core";
+import { Injectable, inject } from "@angular/core";
 import { Observable } from "rxjs";
 import { StoryPayload } from "./app.models";
 
@@ -7,7 +7,8 @@ import { StoryPayload } from "./app.models";
   providedIn: 'root'
 })
 export class AppService {
-  constructor(private http: HttpClient) { }
+  readonly http = inject(HttpClient);
+
   private controllerString = `/Story`;
 
   getNewStories(): Observable<StoryPayload> {

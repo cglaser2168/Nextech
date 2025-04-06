@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, signal, untracked } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { StoryDisplay } from './app.models';
 import { AppService } from './app.service';
@@ -29,22 +29,15 @@ export class AppComponent implements OnInit {
     })
   })
 
-  constructor(
-    private appService: AppService,
-    private spinner: NgxSpinnerService
-  ) { }
+  readonly appService = inject(AppService);
+  readonly spinner = inject(NgxSpinnerService);
 
   ngOnInit() {
     this.spinner.show('spinner');
     this.appService.getNewStories().subscribe({
       next: (results) => {
-        console.log(results)
-
         this.stories.set(results.stories);
         this.storyCount.set(results.recordCount);
-      },
-      error: () => {
-        // errror
       },
       complete: () => {
         this.spinner.hide('spinner');
@@ -57,7 +50,6 @@ export class AppComponent implements OnInit {
   }
 
   lastPage() {
-    // todo rounding?
     this.pageNumber.set(this.numberOfPages());
   }
 
@@ -78,18 +70,11 @@ export class AppComponent implements OnInit {
   }
 
   getPage() {
-    console.log(this.searchText())
     this.spinner.show('spinner');
     this.appService.getStoriesPaged(this.pageNumber(), this.pageSize(), this.searchText() !== '' ? this.searchText() : null).subscribe({
       next: (results) => {
-        console.log(results)
-
         this.stories.set(results.stories);
         this.storyCount.set(results.recordCount);
-      },
-      error: () => {
-        this.spinner.hide('spinner');
-        // errror
       },
       complete: () => {
         this.spinner.hide('spinner');
