@@ -5,5 +5,6 @@ export interface StoryDisplay {
 
 export interface StoryPayload {
   recordCount: number;
+  isReset: boolean;
   stories: StoryDisplay[];
 }

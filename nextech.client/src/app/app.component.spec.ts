@@ -27,6 +27,7 @@ describe('AppComponent', () => {
 
     this.sampleData = {
       recordCount: 2,
+      isReset: false,
       stories: [
         { title: 'A sample Title', url: 'hiip://beepboop.gov' },
         { title: 'Not google', url: 'hiip://notgoogle.com' },
@@ -131,5 +132,19 @@ describe('AppComponent', () => {
 
     expect(this.component.appService.getStoriesPaged).toHaveBeenCalledWith(2, 30, 'test');
     expect(this.component.stories()).toEqual(this.sampleData.stories);
+  });
+
+  it('should search stories based on criteria and reset page', function (this: TestClasses) {
+    this.sampleData.isReset = true;
+    this.component.pageNumber.set(2);
+    this.component.pageSize.set(30);
+    this.component.searchText.set('test');
+
+    this.component.getPage();
+    this.fixture.detectChanges();
+
+    expect(this.component.appService.getStoriesPaged).toHaveBeenCalledWith(2, 30, 'test');
+    expect(this.component.stories()).toEqual(this.sampleData.stories);
+    expect(this.component.pageNumber()).toEqual(1);
   });
 });

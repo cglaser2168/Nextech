@@ -20,6 +20,7 @@ export class AppService {
     if (searchText !== null) {
       body = body.set('searchText', searchText);
     }
+    console.log(body);
 
     return this.http.post<StoryPayload>(`${this.controllerString}/PagedStories/${pageNumber}/${pageSize}`, body);
   }

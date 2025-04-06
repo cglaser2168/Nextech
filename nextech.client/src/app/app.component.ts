@@ -75,6 +75,11 @@ export class AppComponent implements OnInit {
       next: (results) => {
         this.stories.set(results.stories);
         this.storyCount.set(results.recordCount);
+
+        // If there are not enough records to reach the same page, reset to page 1.
+        if (results.isReset) {
+          this.pageNumber.set(1);
+        }
       },
       complete: () => {
         this.spinner.hide('spinner');

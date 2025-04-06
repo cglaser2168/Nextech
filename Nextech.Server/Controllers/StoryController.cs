@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Nextech.Server.Models;
-using Swashbuckle.AspNetCore.Annotations;
 
 namespace Nextech.Server.Controllers
 {
@@ -11,14 +10,11 @@ namespace Nextech.Server.Controllers
     {
         private readonly IMemoryCache _cache;
         private readonly HttpClient _client;
-        private readonly MemoryCacheEntryOptions _options;
 
         public StoryController(IMemoryCache cache, HttpClient client)
         {
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _client = client ?? throw new ArgumentNullException(nameof(client));
-
-            _options = new() { AbsoluteExpiration = DateTimeOffset.UtcNow.AddHours(2) };
         }
 
         private readonly string BASE_URL = "https://hacker-news.firebaseio.com/v0/";
@@ -33,7 +29,7 @@ namespace Nextech.Server.Controllers
         public async Task<StoryPayloadDto> GetNewStories()
         {
             var stories = await GetStoriesBasedOnCache();
-            return new StoryPayloadDto() { RecordCount = stories.Count, Stories = stories.Take(20).ToList() };
+            return new StoryPayloadDto() { RecordCount = stories.Count, Stories = stories.Take(20).ToList(), IsReset = false };
         }
 
         /// <summary>
@@ -47,28 +43,42 @@ namespace Nextech.Server.Controllers
         {
             var stories = await GetStoriesBasedOnCache();
 
-            var filtered = stories.Where(t => string.IsNullOrWhiteSpace(searchText) ||
-                        t.Title.ToLower().Contains(searchText) ||
+            var test = stories.Where(t => t.Title.Contains(searchText) ||
                         t.Url.ToLower().Contains(searchText)).ToList();
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                stories = stories.Where(t =>
+                    t.Title.Contains(searchText) ||
+                    t.Url.ToLower().Contains(searchText)).ToList();
+            }
+
+            if (stories.Count < pageNumber * pageSize)
+            {
+                return new StoryPayloadDto()
+                {
+                    RecordCount = stories.Count,
+                    Stories = stories.Take(pageSize).ToList(),
+                    IsReset = true
+                };
+            }
 
             return new StoryPayloadDto()
             {
-                RecordCount = filtered.Count,
-                Stories = filtered.Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize).ToList()
+                RecordCount = stories.Count,
+                IsReset = false,
+                Stories = stories.Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize).ToList()
             };
         }
 
-        // Ignoring allows me to make this public to be tested directly.
-        [SwaggerIgnore]
         public async Task<List<StoryDisplayDto>> GetStoriesBasedOnCache()
         {
             bool isCached = _cache.TryGetValue(CACHE_KEY, out List<StoryDisplayDto>? cachedStories);
             return isCached ? cachedStories! : await FetchStoriesFromApi();
         }
 
-        // Ignoring allows me to make this public to be tested directly, and making virtual lets me mock it.
-        [SwaggerIgnore]
+        // Making this virtual lets me mock it.
         public virtual async Task<List<StoryDisplayDto>> FetchStoriesFromApi()
         {
             var response = await _client.GetAsync($"{BASE_URL}newstories{BASE_SUFFIX}");

@@ -4,7 +4,6 @@ using Moq.Protected;
 using Newtonsoft.Json;
 using Nextech.Server.Controllers;
 using Nextech.Server.Models;
-using System.Threading.Tasks;
 
 namespace Nextech.Server.Test;
 
@@ -99,7 +98,7 @@ public class StoryControllerTests
     public async Task GetPagedStories_NoSearch_ReturnsBaseData()
     {
         object stories = _testData.Stories;
-        var expected = new StoryPayloadDto() { RecordCount = _testData.Stories.Count, Stories = _testData.Stories };
+        var expected = new StoryPayloadDto() { RecordCount = _testData.Stories.Count, Stories = _testData.Stories, IsReset = true };
 
         var mockCache = new Mock<IMemoryCache>();
         mockCache.Setup(t => t.TryGetValue(It.IsAny<string>(), out stories))
@@ -119,7 +118,7 @@ public class StoryControllerTests
     public async Task GetPagedStories_SearchFilter_ReturnsFilteredData()
     {
         object stories = _testData.Stories;
-        var expected = new StoryPayloadDto() { RecordCount = _testData.FilteredStories.Count, Stories = _testData.FilteredStories };
+        var expected = new StoryPayloadDto() { RecordCount = _testData.FilteredStories.Count, Stories = _testData.FilteredStories, IsReset = true };
 
         var mockCache = new Mock<IMemoryCache>();
         mockCache.Setup(t => t.TryGetValue(It.IsAny<string>(), out stories))
@@ -131,6 +130,26 @@ public class StoryControllerTests
         var sut = new StoryController(mockCache.Object, clientMock);
 
         var result = await sut.GetPagedStories(1, 20, "test");
+
+        Assert.Equivalent(expected, result);
+    }
+
+    [Fact]
+    public async Task GetPagedStories_SearchFilter_DoesNotResetPage()
+    {
+        object stories = _testData.SingleStory;
+        var expected = new StoryPayloadDto() { RecordCount = _testData.SingleStory.Count, Stories = _testData.SingleStory, IsReset = false };
+
+        var mockCache = new Mock<IMemoryCache>();
+        mockCache.Setup(t => t.TryGetValue(It.IsAny<string>(), out stories))
+            .Returns(true);
+
+        var httpHandler = new Mock<HttpMessageHandler>();
+        var clientMock = new HttpClient(httpHandler.Object);
+
+        var sut = new StoryController(mockCache.Object, clientMock);
+
+        var result = await sut.GetPagedStories(1, 1, "test");
 
         Assert.Equivalent(expected, result);
     }
