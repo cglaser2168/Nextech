@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Nextech.Server.Models;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Nextech.Server.Controllers
 {
@@ -58,13 +59,17 @@ namespace Nextech.Server.Controllers
             };
         }
 
-        private async Task<List<StoryDisplayDto>> GetStoriesBasedOnCache()
+        // Ignoring allows me to make this public to be tested directly.
+        [SwaggerIgnore]
+        public async Task<List<StoryDisplayDto>> GetStoriesBasedOnCache()
         {
             bool isCached = _cache.TryGetValue(CACHE_KEY, out List<StoryDisplayDto>? cachedStories);
             return isCached ? cachedStories! : await FetchStoriesFromApi();
         }
 
-        private async Task<List<StoryDisplayDto>> FetchStoriesFromApi()
+        // Ignoring allows me to make this public to be tested directly, and making virtual lets me mock it.
+        [SwaggerIgnore]
+        public virtual async Task<List<StoryDisplayDto>> FetchStoriesFromApi()
         {
             var response = await _client.GetAsync($"{BASE_URL}newstories{BASE_SUFFIX}");
             response.EnsureSuccessStatusCode();

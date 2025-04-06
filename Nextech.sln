@@ -6,6 +6,11 @@ Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "nextech.client", "nextech.c
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nextech.Server", "Nextech.Server\Nextech.Server.csproj", "{3F5D681F-E189-4D21-82A1-B5DF80C684AF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nextech.Server.Test", "Nextech.Server.Test\Nextech.Server.Test.csproj", "{27482E0D-6781-4123-97AF-4977CD84833E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3F5D681F-E189-4D21-82A1-B5DF80C684AF} = {3F5D681F-E189-4D21-82A1-B5DF80C684AF}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,6 +27,10 @@ Global
 		{3F5D681F-E189-4D21-82A1-B5DF80C684AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F5D681F-E189-4D21-82A1-B5DF80C684AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F5D681F-E189-4D21-82A1-B5DF80C684AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27482E0D-6781-4123-97AF-4977CD84833E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27482E0D-6781-4123-97AF-4977CD84833E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27482E0D-6781-4123-97AF-4977CD84833E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27482E0D-6781-4123-97AF-4977CD84833E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

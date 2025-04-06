@@ -2,28 +2,34 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { StoryDisplay } from './app.models';
+import { AppService } from './app.service';
 
 describe('AppComponent', () => {
   let component: AppComponent;
   let fixture: ComponentFixture<AppComponent>;
-  let httpMock: HttpTestingController;
+  let serviceMock: any;
 
   beforeEach(async () => {
+    serviceMock: {
+      getNewStories: jasmine.createSpy('getNewStories').call
+    }
+
     await TestBed.configureTestingModule({
     declarations: [AppComponent],
     imports: [],
-    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+    providers: [
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting(),
+      { provide: AppService, useValue: serviceMock }
+    ]
 }).compileComponents();
   });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(AppComponent);
     component = fixture.componentInstance;
-    httpMock = TestBed.inject(HttpTestingController);
-  });
-
-  afterEach(() => {
-    httpMock.verify();
+    serviceMock = TestBed.inject(HttpTestingController);
   });
 
   it('should create the app', () => {
@@ -31,13 +37,14 @@ describe('AppComponent', () => {
   });
 
   it('should retrieve weather forecasts from the server', () => {
-    const mockForecasts = [
-      { date: '2021-10-01', temperatureC: 20, temperatureF: 68, summary: 'Mild' },
-      { date: '2021-10-02', temperatureC: 25, temperatureF: 77, summary: 'Warm' }
+    const mockStories: StoryDisplay[] = [
+      { title: 'A sample Title', url: 'hiip://beepboop.gov' },
+      { title: 'Not google', url: 'hiip://notgoogle.com' },
     ];
 
     component.ngOnInit();
 
+    expect()
     const req = httpMock.expectOne('/weatherforecast');
     expect(req.request.method).toEqual('GET');
     req.flush(mockForecasts);
