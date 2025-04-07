@@ -4,8 +4,6 @@ namespace Nextech.Server.Test;
 
 public class TestData
 {
-    public List<int> StoryIds = [123,234,345,456,567,678,789,890];
-
     public List<StoryDisplayDto> Stories =
     [
         new StoryDisplayDto(){ Title = "A test Title", Url = "hiip://beepboop.gov" },
